@@ -42,6 +42,9 @@ case $target in
   i*86-*-*)
     have_x86=true
     ;;
+  x86_64-k1om-linux-gnu)
+    have_mic=true
+    ;;
   x86_64-*-*|amd64-*-*)
     have_x86_64=true
     ;;
@@ -101,6 +104,7 @@ AM_CONDITIONAL([HAVE_WINDOWS], [test x$have_win32 = xtrue])
 AM_CONDITIONAL([ARCH_x86], [test x$have_x86 = xtrue])
 AM_CONDITIONAL([ARCH_x86_64], [test x$have_x86_64 = xtrue])
 AM_CONDITIONAL([ARCH_ARM], [test x$have_arm = xtrue])
+AM_CONDITIONAL([ARCH_MIC], [test x$have_mic = xtrue])
 
 if test x$request_jansson = xtrue
 then

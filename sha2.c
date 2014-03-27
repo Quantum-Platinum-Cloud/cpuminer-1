@@ -581,6 +581,64 @@ static inline int scanhash_sha256d_8way(int thr_id, uint32_t *pdata,
 
 #endif /* HAVE_SHA256_8WAY */
 
+#ifdef HAVE_SHA256_16WAY
+
+void sha256d_ms_16way(uint32_t *hash,  uint32_t *data,
+	const uint32_t *midstate, const uint32_t *prehash);
+
+static inline int scanhash_sha256d_16way(int thr_id, uint32_t *pdata,
+	const uint32_t *ptarget, uint32_t max_nonce, unsigned long *hashes_done)
+{
+	uint32_t data[16 * 64] __attribute__((aligned(128)));
+	uint32_t hash[16 * 8] __attribute__((aligned(64)));
+	uint32_t midstate[16 * 8] __attribute__((aligned(64)));
+	uint32_t prehash[16 * 8] __attribute__((aligned(64)));
+	uint32_t n = pdata[19] - 1;
+	const uint32_t first_nonce = pdata[19];
+	const uint32_t Htarg = ptarget[7];
+	int i, j;
+	
+	memcpy(data, pdata + 16, 64);
+	sha256d_preextend(data);
+	for (i = 63; i >= 0; i--)
+		for (j = 0; j < 16; j++)
+			data[i * 16 + j] = data[i];
+	
+	sha256_init(midstate);
+	sha256_transform(midstate, pdata, 0);
+	memcpy(prehash, midstate, 32);
+	sha256d_prehash(prehash, pdata + 16);
+	for (i = 7; i >= 0; i--) {
+		for (j = 0; j < 16; j++) {
+			midstate[i * 16 + j] = midstate[i];
+			prehash[i * 16 + j] = prehash[i];
+		}
+	}
+	
+	do {
+		for (i = 0; i < 16; i++)
+			data[16 * 3 + i] = ++n;
+		
+		sha256d_ms_16way(hash, data, midstate, prehash);
+		
+		for (i = 0; i < 16; i++) {
+			if (swab32(hash[16 * 7 + i]) <= Htarg) {
+				pdata[19] = data[16 * 3 + i];
+				sha256d_80_swap(hash, pdata);
+				if (fulltest(hash, ptarget)) {
+					*hashes_done = n - first_nonce + 1;
+					return 1;
+				}
+			}
+		}
+	} while (n < max_nonce && !work_restart[thr_id].restart);
+	*hashes_done = n - first_nonce + 1;
+	pdata[19] = n;
+	return 0;
+}
+
+#endif /* HAVE_SHA256_16WAY */
+
 int scanhash_sha256d(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	uint32_t max_nonce, unsigned long *hashes_done)
 {
@@ -592,6 +650,11 @@ int scanhash_sha256d(int thr_id, uint32_t *pdata, const uint32_t *ptarget,
 	const uint32_t first_nonce = pdata[19];
 	const uint32_t Htarg = ptarget[7];
 	
+#ifdef HAVE_SHA256_16WAY
+	if (sha256_use_16way())
+		return scanhash_sha256d_16way(thr_id, pdata, ptarget,
+			max_nonce, hashes_done);
+#endif
 #ifdef HAVE_SHA256_8WAY
 	if (sha256_use_8way())
 		return scanhash_sha256d_8way(thr_id, pdata, ptarget,

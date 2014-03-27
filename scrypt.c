@@ -378,7 +378,7 @@ static inline void PBKDF2_SHA256_128_32_8way(uint32_t *tstate,
 #endif /* HAVE_SHA256_8WAY */
 
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) && !defined(__MIC__)
 
 #define SCRYPT_MAX_WAYS 12
 #define HAVE_SCRYPT_3WAY 1

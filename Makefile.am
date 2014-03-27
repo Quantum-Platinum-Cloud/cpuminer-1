@@ -27,6 +27,9 @@ endif
 if ARCH_ARM
 minerd_SOURCES += sha2-arm.S scrypt-arm.S
 endif
+if ARCH_MIC
+minerd_SOURCES += sha2-mic.S
+endif
 minerd_LDFLAGS	= $(PTHREAD_FLAGS)
 minerd_LDADD	= @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@
 minerd_CPPFLAGS = @LIBCURL_CPPFLAGS@

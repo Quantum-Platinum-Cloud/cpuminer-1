@@ -134,7 +134,12 @@ void sha256_init(uint32_t *state);
 void sha256_transform(uint32_t *state, const uint32_t *block, int swap);
 void sha256d(unsigned char *hash, const unsigned char *data, int len);
 
-#if defined(__ARM_NEON__) || defined(__i386__) || defined(__x86_64__)
+#if defined(__MIC__)
+#define HAVE_SHA256_16WAY 1
+#define sha256_use_16way(a) 1
+void sha256_init_16way(uint32_t *state);
+void sha256_transform_16way(uint32_t *state, const uint32_t *block, int swap);
+#elif defined(__ARM_NEON__) || defined(__i386__) || defined(__x86_64__)
 #define HAVE_SHA256_4WAY 1
 int sha256_use_4way();
 void sha256_init_4way(uint32_t *state);
